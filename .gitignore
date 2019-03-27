@@ -1,2 +1,5 @@
 sample_data
 .vscode
+real_data
+vehicle_page_views.csv
+invalid_page_urls.csv
