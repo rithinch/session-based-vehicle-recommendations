@@ -26,13 +26,13 @@ def get_details(page_url):
     if len(vals) > 1:
         try:
             spec = vals[3].split("-")
-            details['make'] = vals[1]
-            details['model'] = vals[2]
-            details['transmission'] = spec[0]
-            details['fuel'] = spec[1]
-            details['reg_no'] = spec[-1]
-            details['body'] = " ".join(spec[3:-1])
-            details['colour'] = spec[2]
+            details['make'] = vals[1].lower()
+            details['model'] = vals[2].lower()
+            details['transmission'] = spec[0].lower()
+            details['fuel'] = spec[1].lower()
+            details['reg_no'] = spec[-1].lower()
+            details['body'] = " ".join(spec[3:-1]).lower()
+            details['colour'] = spec[2].lower()
         except IndexError:
             errors.append(page_url)
 
@@ -46,13 +46,13 @@ def concat_csv_files(files_path):
 
     combined_csv = pd.concat([pd.read_csv(f, skiprows=6) for f in filenames])
 
-    combined_csv['Reg No'] = combined_csv['Page'].apply(lambda x: get_details(x)['reg_no'])
-    combined_csv['Make'] = combined_csv['Page'].apply(lambda x: get_details(x)['make'])
-    combined_csv['Model'] = combined_csv['Page'].apply(lambda x: get_details(x)['model'])
-    combined_csv['Fuel'] = combined_csv['Page'].apply(lambda x: get_details(x)['fuel'])
-    combined_csv['Colour'] = combined_csv['Page'].apply(lambda x: get_details(x)['colour'])
-    combined_csv['Body'] = combined_csv['Page'].apply(lambda x: get_details(x)['body'])
-    combined_csv['Trasmission'] = combined_csv['Page'].apply(lambda x: get_details(x)['transmission'])
+    combined_csv['reg_no'] = combined_csv['Page'].apply(lambda x: get_details(x)['reg_no'])
+    combined_csv['make'] = combined_csv['Page'].apply(lambda x: get_details(x)['make'])
+    combined_csv['model'] = combined_csv['Page'].apply(lambda x: get_details(x)['model'])
+    combined_csv['fuel'] = combined_csv['Page'].apply(lambda x: get_details(x)['fuel'])
+    combined_csv['colour'] = combined_csv['Page'].apply(lambda x: get_details(x)['colour'])
+    combined_csv['body'] = combined_csv['Page'].apply(lambda x: get_details(x)['body'])
+    combined_csv['trasmission'] = combined_csv['Page'].apply(lambda x: get_details(x)['transmission'])
 
     combined_csv.to_csv("vehicle_page_views.csv", index=False)
 
