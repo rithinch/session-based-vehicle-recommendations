@@ -4,3 +4,4 @@ real_data
 vehicle_page_views.csv
 invalid_page_urls.csv
 notebooks/.ipynb_checkpoints
+clicks_clean.csv
