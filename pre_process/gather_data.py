@@ -40,21 +40,36 @@ def get_details(page_url):
 
     return details
 
-def concat_csv_files(files_path):
+def rename_df_columns(df):
+    names = {'Client ID': 'client_id', 
+            'Page': 'page', 
+            'Session ID': 'session_id',
+            'Hour of Day': 'date',
+            'Minute': 'time'}
+    
+    df.rename(columns=names, inplace=True)
+    
+def concat_csv_files(files_path, filename):
 
     filenames = glob.glob(files_path, recursive=True)
 
     combined_csv = pd.concat([pd.read_csv(f, skiprows=6) for f in filenames])
+    
+    rename_df_columns(combined_csv)
+    combined_csv.drop('Users', axis=1, inplace=True)
+    combined_csv['date'] = combined_csv['date'].astype(str)
 
-    combined_csv['reg_no'] = combined_csv['Page'].apply(lambda x: get_details(x)['reg_no'])
-    combined_csv['make'] = combined_csv['Page'].apply(lambda x: get_details(x)['make'])
-    combined_csv['model'] = combined_csv['Page'].apply(lambda x: get_details(x)['model'])
-    combined_csv['fuel'] = combined_csv['Page'].apply(lambda x: get_details(x)['fuel'])
-    combined_csv['colour'] = combined_csv['Page'].apply(lambda x: get_details(x)['colour'])
-    combined_csv['body'] = combined_csv['Page'].apply(lambda x: get_details(x)['body'])
-    combined_csv['trasmission'] = combined_csv['Page'].apply(lambda x: get_details(x)['transmission'])
+    combined_csv['time'] = combined_csv.apply(lambda x: f"{x['date'][-2:]}:{x['time']}", axis=1)
+    combined_csv['date'] = combined_csv['date'].apply(lambda x: f"{x[:4]}-{x[4:6]}-{x[6:8]}")
+    combined_csv['reg_no'] = combined_csv['page'].apply(lambda x: get_details(x)['reg_no'])
+    combined_csv['make'] = combined_csv['page'].apply(lambda x: get_details(x)['make'])
+    combined_csv['model'] = combined_csv['page'].apply(lambda x: get_details(x)['model'])
+    combined_csv['fuel'] = combined_csv['page'].apply(lambda x: get_details(x)['fuel'])
+    combined_csv['colour'] = combined_csv['page'].apply(lambda x: get_details(x)['colour'])
+    combined_csv['body'] = combined_csv['page'].apply(lambda x: get_details(x)['body'])
+    combined_csv['trasmission'] = combined_csv['page'].apply(lambda x: get_details(x)['transmission'])
 
-    combined_csv.to_csv("vehicle_page_views.csv", index=False)
+    combined_csv.to_csv(filename, index=False)
 
     print(combined_csv.head())
 
@@ -64,7 +79,7 @@ def concat_csv_files(files_path):
 
 files_path = "real_data/**/*.csv"
 
-concat_csv_files(files_path)
+concat_csv_files(files_path, "clicks_raw.csv")
 
 
 
