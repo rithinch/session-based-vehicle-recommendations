@@ -1,5 +1,6 @@
 import glob
 import pandas as pd
+import time
 
 extracted_values = {}
 errors = []
@@ -40,6 +41,11 @@ def get_details(page_url):
 
     return details
 
+def get_timeframe(row):
+
+    string = f"{row['date']}T{row['time']}"
+    return int(time.mktime(time.strptime(string, '%Y-%m-%dT%H:%M')))
+
 def rename_df_columns(df):
     names = {'Client ID': 'client_id', 
             'Page': 'page', 
@@ -61,6 +67,8 @@ def concat_csv_files(files_path, filename):
 
     combined_csv['time'] = combined_csv.apply(lambda x: f"{x['date'][-2:]}:{x['time']}", axis=1)
     combined_csv['date'] = combined_csv['date'].apply(lambda x: f"{x[:4]}-{x[4:6]}-{x[6:8]}")
+    combined_csv['timeframe'] = combined_csv.apply(get_timeframe, axis=1)
+    
     combined_csv['reg_no'] = combined_csv['page'].apply(lambda x: get_details(x)['reg_no'])
     combined_csv['make'] = combined_csv['page'].apply(lambda x: get_details(x)['make'])
     combined_csv['model'] = combined_csv['page'].apply(lambda x: get_details(x)['model'])
