@@ -10,7 +10,7 @@ dataset = 'clicks_clean.csv'
 
 print("-- Starting @ %ss" % datetime.datetime.now())
 with open(dataset, "r") as f:
-    reader = csv.DictReader(f, delimiter=';')
+    reader = csv.DictReader(f, delimiter=',')
     sess_clicks = {}
     sess_date = {}
     ctr = 0

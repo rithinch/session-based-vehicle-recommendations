@@ -6,3 +6,5 @@ invalid_page_urls.csv
 notebooks/.ipynb_checkpoints
 clicks_clean.csv
 clicks_raw.csv
+dataset
+
