@@ -5,7 +5,7 @@ from utils import build_graph, Data, split_validation
 from model import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset_folder', default='dataset', help='dataset name: diginetica/yoochoose1_4/yoochoose1_64/sample')
+parser.add_argument('--dataset_folder', default='dataset_small_25000_sessions', help='dataset name: diginetica/yoochoose1_4/yoochoose1_64/sample')
 parser.add_argument('--batchSize', type=int, default=100, help='input batch size')
 parser.add_argument('--hiddenSize', type=int, default=100, help='hidden state size')
 parser.add_argument('--epoch', type=int, default=30, help='the number of epochs to train for')
@@ -23,19 +23,19 @@ print(opt)
 
 
 def main():
-    train_data = pickle.load(open('./' + opt.dataset + '/train.txt', 'rb'))
+    train_data = pickle.load(open('./' + opt.dataset_folder + '/train.dat', 'rb'))
     if opt.validation:
         train_data, valid_data = split_validation(train_data, opt.valid_portion)
         test_data = valid_data
     else:
-        test_data = pickle.load(open('./' + opt.dataset + '/test.txt', 'rb'))
-    # all_train_seq = pickle.load(open('../datasets/' + opt.dataset + '/all_train_seq.txt', 'rb'))
+        test_data = pickle.load(open('./' + opt.dataset_folder + '/test.dat', 'rb'))
+    # all_train_seq = pickle.load(open('../datasets/' + opt.dataset + '/all_train_seq.dat', 'rb'))
     # g = build_graph(all_train_seq)
     train_data = Data(train_data, shuffle=True)
     test_data = Data(test_data, shuffle=False)
     # del all_train_seq, g
     
-    n_node = 7173 #unique cars
+    n_node = 5933 #unique cars
 
     model = trans_to_cuda(SessionGraph(opt, n_node))
 
@@ -56,6 +56,10 @@ def main():
             best_result[1] = mrr
             best_epoch[1] = epoch
             flag = 1
+        
+        print('Current Result:')
+        print('\tRecall@20:\t%.4f\tMMR@20:\t%.4f\tEpoch:\t%d,\t%d'% (hit, mrr, epoch, epoch))
+
         print('Best Result:')
         print('\tRecall@20:\t%.4f\tMMR@20:\t%.4f\tEpoch:\t%d,\t%d'% (best_result[0], best_result[1], best_epoch[0], best_epoch[1]))
         bad_counter += 1 - flag

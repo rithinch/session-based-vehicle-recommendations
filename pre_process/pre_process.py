@@ -6,7 +6,7 @@ import datetime
 import os
 
 
-dataset = 'clicks_clean.csv'
+dataset = 'clicks_clean_25000_sessions.csv'
 
 print("-- Starting @ %ss" % datetime.datetime.now())
 with open(dataset, "r") as f:
@@ -175,11 +175,25 @@ for seq in tes_seqs:
     all += len(seq)
 print('avg length: ', all/(len(tra_seqs) + len(tes_seqs) * 1.0))
 
-if not os.path.exists('dataset'):
-    os.makedirs('dataset')
-pickle.dump(tra, open('dataset/train.dat', 'wb'))
-pickle.dump(tes, open('dataset/test.dat', 'wb'))
-pickle.dump(tra_seqs, open('dataset/all_train_seq.dat', 'wb'))
+if not os.path.exists('dataset_small_25000_sessions'):
+    os.makedirs('dataset_small_25000_sessions')
+
+shrink_data = False
+
+if shrink_data:
+    split8 = int(len(tr_seqs) / 8)
+    print(len(tr_seqs[-split8:]))
+
+    tra8 = (tr_seqs[-split8:], tr_labs[-split8:])
+    seq8 = tra_seqs[tr_ids[-split8]:]
+
+    pickle.dump(tra, open('dataset_8/train.dat', 'wb'))
+    pickle.dump(tes, open('dataset_8/test.dat', 'wb'))
+    pickle.dump(tra_seqs, open('dataset_8/all_train_seq.dat', 'wb'))
+
+pickle.dump(tra, open('dataset_small_25000_sessions/train.dat', 'wb'))
+pickle.dump(tes, open('dataset_small_25000_sessions/test.dat', 'wb'))
+pickle.dump(tra_seqs, open('dataset_small_25000_sessions/all_train_seq.dat', 'wb'))
 
 print('Done.')
 
