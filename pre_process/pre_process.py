@@ -5,9 +5,16 @@ import operator
 import datetime
 import os
 import pandas as pd 
+import argparse
 
-dataset = 'datasets/clicks_clean_25000_sessions.csv'
-save_folder_name = "dataset_25000_sessions"
+parser = argparse.ArgumentParser()
+parser.add_argument('--file', help='dataset file which has the click stream')
+parser.add_argument('--dest', help='folder where to save the pre-processed data')
+parser.add_argument('--split_days', type=int, default=7, help='folder where to save the pre-processed data')
+opt = parser.parse_args()
+
+dataset = opt.file
+save_folder_name = opt.dest
 
 print("-- Starting @ %ss" % datetime.datetime.now())
 with open(dataset, "r") as f:
@@ -80,7 +87,7 @@ for _, date in dates:
         maxdate = date
 
 # 7 days for test
-splitdate = maxdate - 86400 * 3
+splitdate = maxdate - 86400 * opt.split_days
 
 print('Splitting date', splitdate) 
 tra_sess = filter(lambda x: x[1] < splitdate, dates)
