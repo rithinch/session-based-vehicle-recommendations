@@ -5,7 +5,6 @@ import pickle
 import torch
 import argparse
 
-from utils import build_graph, Data, split_validation
 from model import *
 
 
@@ -25,17 +24,25 @@ parser.add_argument('--patience', type=int, default=10, help='the number of epoc
 parser.add_argument('--nonhybrid', action='store_true', help='only use the global preference to predict')
 parser.add_argument('--validation', action='store_true', help='validation')
 parser.add_argument('--valid_portion', type=float, default=0.1, help='split the portion of training set as validation set')
+parser.add_argument('--model_name',  default='vehicle_recommendations_model', help='name of the model to be saved')
 opt = parser.parse_args()
 
+local = False
+
 def init():
-    global model, item_to_vehicle_mappings
+    global model, item_to_vehicle_mappings, vehicle_to_item_mappings
     # retrieve the path to the model file using the model name
-    model_path = 'outputs/vehicle_recommendations_model.pt' #Model.get_model_path('sklearn_mnist')
-    model = SessionGraph(opt, 1149)
+
+    model_path = f'outputs/{opt.model_name}.pt' if local else Model.get_model_path(opt.model_name)
+    item_mapping_path = os.path.join(f'outputs/{opt.model_name}_item_veh_mapping.dat') if local else Model.get_model_path(f'{opt.model_name}_item_veh_mapping')
+    veh_mapping_path = os.path.join(f'outputs/{opt.model_name}_veh_item_mapping.dat') if local else Model.get_model_path(f'{opt.model_name}_veh_item_mapping')
+
+    item_to_vehicle_mappings = pickle.load(open(item_mapping_path, 'rb')) 
+    vehicle_to_item_mappings = pickle.load(open(veh_mapping_path, 'rb')) 
+
+    model = SessionGraph(opt, len(item_to_vehicle_mappings)+1)
     model.load_state_dict(torch.load(model_path))
     model.eval()
-
-    item_to_vehicle_mappings = pickle.load(open(os.path.join('outputs/itemid_to_vehicle_mapping.dat'), 'rb'))
 
 def create_connection_matrix(session_sequence_list):
     inputs, mask = np.asarray([session_sequence_list]), np.asarray([[1] * len(session_sequence_list)])
@@ -76,6 +83,13 @@ def predict(model, data):
     return model.compute_scores(seq_hidden, mask)
 
 def run(raw_data):
-    data = raw_data #np.array(json.loads(raw_data)['data']) #List of clicks eg [1,2,3,4]
-    predictions = predict(model, data) # make prediction
+    data = raw_data if local else np.array(json.loads(raw_data)['data']) #List of clicks eg [1,2,3,4]
+    mapped_data = []
+    
+    for i in data:
+        i = i.lower()
+        if i in vehicle_to_item_mappings:
+            mapped_data.append(vehicle_to_item_mappings[i])
+
+    predictions = predict(model, mapped_data) # make prediction
     return [ item_to_vehicle_mappings[i] for i in predictions.topk(20)[1].tolist()[0]]

@@ -78,9 +78,6 @@ def main(run):
         #Metrics Capture
         run.log('Recall@20', hit)
         run.log('MRR@20', mrr)
-        run.log_list('Recall@20 over epochs', hit_list)
-        run.log_list('MRR@20 over epochs', mrr_list)
-        run.log_list('Mean loss over epochs', loss_list)
 
         print('Current Result:')
         print('\tRecall@20:\t%.4f\tMMR@20:\t%.4f\tMean Loss:\t%.4f,\tEpoch:\t%d,\t%d'% (hit, mrr, mean_loss, epoch, epoch))
