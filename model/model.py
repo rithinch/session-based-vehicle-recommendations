@@ -128,7 +128,10 @@ def train_test(model, train_data, test_data):
         total_loss += loss
         if j % int(len(slices) / 5 + 1) == 0:
             print('[%d/%d] Loss: %.4f' % (j, len(slices), loss.item()))
-    print('\tLoss:\t%.3f' % total_loss)
+    
+    mean_loss = (total_loss/len(slices)).item()
+
+    print('\tMean Loss:\t%.3f' % mean_loss)
 
     print('start predicting: ', datetime.datetime.now())
     model.eval()
@@ -146,4 +149,4 @@ def train_test(model, train_data, test_data):
                 mrr.append(1 / (np.where(score == target - 1)[0][0] + 1))
     hit = np.mean(hit) * 100
     mrr = np.mean(mrr) * 100
-    return hit, mrr
+    return hit, mrr, mean_loss

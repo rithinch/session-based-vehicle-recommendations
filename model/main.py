@@ -3,9 +3,13 @@ import pickle
 import time
 from utils import build_graph, Data, split_validation
 from model import *
+import os
+import torch
+
+from azureml.core import Run
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset_folder', default='dataset_small_25000_sessions', help='dataset name: diginetica/yoochoose1_4/yoochoose1_64/sample')
+parser.add_argument('--dataset_folder', default='data/dataset_sample', help='dataset folder')
 parser.add_argument('--batchSize', type=int, default=100, help='input batch size')
 parser.add_argument('--hiddenSize', type=int, default=100, help='hidden state size')
 parser.add_argument('--epoch', type=int, default=30, help='the number of epochs to train for')
@@ -22,20 +26,20 @@ opt = parser.parse_args()
 print(opt)
 
 
-def main():
-    train_data = pickle.load(open('./' + opt.dataset_folder + '/train.dat', 'rb'))
+def main(run):
+    train_data = pickle.load(open(os.path.join(opt.dataset_folder, 'train.dat'), 'rb'))
     if opt.validation:
         train_data, valid_data = split_validation(train_data, opt.valid_portion)
         test_data = valid_data
     else:
-        test_data = pickle.load(open('./' + opt.dataset_folder + '/test.dat', 'rb'))
+        test_data = pickle.load(open(os.path.join(opt.dataset_folder, 'test.dat'), 'rb'))
     # all_train_seq = pickle.load(open('../datasets/' + opt.dataset + '/all_train_seq.dat', 'rb'))
     # g = build_graph(all_train_seq)
     train_data = Data(train_data, shuffle=True)
     test_data = Data(test_data, shuffle=False)
     # del all_train_seq, g
     
-    n_node = 5933 #unique cars
+    n_node = 1149 #6176 #5933 #unique cars
 
     model = trans_to_cuda(SessionGraph(opt, n_node))
 
@@ -43,10 +47,21 @@ def main():
     best_result = [0, 0]
     best_epoch = [0, 0]
     bad_counter = 0
+
+    hit_list = []
+    mrr_list = []
+    loss_list = []
+
     for epoch in range(opt.epoch):
         print('-------------------------------------------------------')
         print('epoch: ', epoch)
-        hit, mrr = train_test(model, train_data, test_data)
+        
+        hit, mrr, mean_loss = train_test(model, train_data, test_data)
+        
+        hit_list.append(hit)
+        mrr_list.append(mrr)
+        loss_list.append(mean_loss)
+
         flag = 0
         if hit >= best_result[0]:
             best_result[0] = hit
@@ -57,8 +72,16 @@ def main():
             best_epoch[1] = epoch
             flag = 1
         
+
+        #Metrics Capture
+        run.log('Recall@20', hit)
+        run.log('MRR@20', mrr)
+        run.log_list('Recall@20 over epochs', hit_list)
+        run.log_list('MRR@20 over epochs', mrr_list)
+        run.log_list('Mean loss over epochs', loss_list)
+
         print('Current Result:')
-        print('\tRecall@20:\t%.4f\tMMR@20:\t%.4f\tEpoch:\t%d,\t%d'% (hit, mrr, epoch, epoch))
+        print('\tRecall@20:\t%.4f\tMMR@20:\t%.4f\tMean Loss:\t%.4f,\tEpoch:\t%d,\t%d'% (hit, mrr, mean_loss, epoch, epoch))
 
         print('Best Result:')
         print('\tRecall@20:\t%.4f\tMMR@20:\t%.4f\tEpoch:\t%d,\t%d'% (best_result[0], best_result[1], best_epoch[0], best_epoch[1]))
@@ -69,6 +92,12 @@ def main():
     end = time.time()
     print("Run time: %f s" % (end - start))
 
+    run.log('Training Time (s)', (end - start))
 
+    #Save Model 
+    os.makedirs('outputs', exist_ok=True)
+    torch.save(model.state_dict(), 'outputs/vehicle_recommendations_model.pt')
+    
 if __name__ == '__main__':
-    main()
+    run = Run.get_context()
+    main(run)

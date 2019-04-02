@@ -22,8 +22,8 @@ def build_graph(train_data):
 
 
 def data_masks(all_usr_pois, item_tail):
-    us_lens = [len(upois) for upois in all_usr_pois]
-    len_max = max(us_lens)
+    us_lens = [len(upois) for upois in all_usr_pois] #list of user session lengths
+    len_max = max(us_lens) #maximum user session length
     us_pois = [upois + item_tail * (len_max - le) for upois, le in zip(all_usr_pois, us_lens)]
     us_msks = [[1] * le + [0] * (len_max - le) for le in us_lens]
     return us_pois, us_msks, len_max
@@ -45,12 +45,12 @@ def split_validation(train_set, valid_portion):
 
 class Data():
     def __init__(self, data, shuffle=False, graph=None):
-        inputs = data[0]
+        inputs = data[0] #Sequence of Lists [[1,2,3],[1]]
         inputs, mask, len_max = data_masks(inputs, [0])
         self.inputs = np.asarray(inputs)
         self.mask = np.asarray(mask)
         self.len_max = len_max
-        self.targets = np.asarray(data[1])
+        self.targets = np.asarray(data[1]) #Next click in the sequence
         self.length = len(inputs)
         self.shuffle = shuffle
         self.graph = graph
