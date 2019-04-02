@@ -155,7 +155,7 @@ tes_ids, tes_dates, tes_seqs = obtian_tes()
 def process_seqs(iseqs, idates):
     out_seqs = []
     out_dates = []
-    labs = []
+    labs = [] #Target/Ending node
     ids = []
     for id, seq, date in zip(range(len(iseqs)), iseqs, idates):
         for i in range(1, len(seq)):
