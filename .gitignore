@@ -15,3 +15,4 @@ model/data
 model/.ipynb_checkpoints
 model/config.json
 clicks_sample_raw.csv
+model/training_scripts/aml_config/project.json

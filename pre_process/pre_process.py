@@ -6,7 +6,8 @@ import datetime
 import os
 import pandas as pd 
 
-dataset = 'datasets/clicks_sample_clean.csv'
+dataset = 'datasets/clicks_clean_25000_sessions.csv'
+save_folder_name = "dataset_25000_sessions"
 
 print("-- Starting @ %ss" % datetime.datetime.now())
 with open(dataset, "r") as f:
@@ -79,7 +80,7 @@ for _, date in dates:
         maxdate = date
 
 # 7 days for test
-splitdate = maxdate - 86400 * 7
+splitdate = maxdate - 86400 * 3
 
 print('Splitting date', splitdate) 
 tra_sess = filter(lambda x: x[1] < splitdate, dates)
@@ -175,8 +176,8 @@ for seq in tes_seqs:
     all += len(seq)
 print('avg length: ', all/(len(tra_seqs) + len(tes_seqs) * 1.0))
 
-if not os.path.exists('dataset_sample'):
-    os.makedirs('dataset_sample')
+if not os.path.exists(save_folder_name):
+    os.makedirs(save_folder_name)
 
 shrink_data = False
 
@@ -201,12 +202,12 @@ def get_item_mappings(filename):
 
     return dict((v,d[k]) for k,v in item_dict.items())
 
-pickle.dump(item_dict, open('dataset_sample/reg_no_item_id.dat', 'wb'))
-pickle.dump(get_item_mappings(dataset), open('dataset_sample/itemid_to_vehicle_mapping.dat', 'wb'))
+pickle.dump(item_dict, open(f'{save_folder_name}/reg_no_item_id.dat', 'wb'))
+pickle.dump(get_item_mappings(dataset), open(f'{save_folder_name}/itemid_to_vehicle_mapping.dat', 'wb'))
 
-#pickle.dump(tra, open('dataset_sample/train.dat', 'wb'))
-#pickle.dump(tes, open('dataset_sample/test.dat', 'wb'))
-#pickle.dump(tra_seqs, open('dataset_sample/all_train_seq.dat', 'wb'))
+pickle.dump(tra, open(f'{save_folder_name}/train.dat', 'wb'))
+pickle.dump(tes, open(f'{save_folder_name}/test.dat', 'wb'))
+pickle.dump(tra_seqs, open(f'{save_folder_name}/all_train_seq.dat', 'wb'))
 
 print('Done.')
 
