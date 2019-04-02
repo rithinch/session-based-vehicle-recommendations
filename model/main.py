@@ -5,6 +5,7 @@ from utils import build_graph, Data, split_validation
 from model import *
 import os
 import torch
+import shutil
 
 from azureml.core import Run
 
@@ -39,7 +40,9 @@ def main(run):
     test_data = Data(test_data, shuffle=False)
     # del all_train_seq, g
     
-    n_node = 1149 #6176 #5933 #unique cars
+    cars = pickle.load(open(os.path.join(opt.dataset_folder, 'reg_no_item_id.dat'), 'rb'))
+
+    n_node = len(cars)+1 #1149 #6176 #5933 #unique cars
 
     model = trans_to_cuda(SessionGraph(opt, n_node))
 
@@ -97,7 +100,8 @@ def main(run):
     #Save Model 
     os.makedirs('outputs', exist_ok=True)
     torch.save(model.state_dict(), 'outputs/vehicle_recommendations_model.pt')
-    
+    shutil.copy(os.path.join(opt.dataset_folder, 'itemid_to_vehicle_mapping.dat'), 'outputs')
+
 if __name__ == '__main__':
     run = Run.get_context()
     main(run)

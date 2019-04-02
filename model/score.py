@@ -28,12 +28,14 @@ parser.add_argument('--valid_portion', type=float, default=0.1, help='split the 
 opt = parser.parse_args()
 
 def init():
-    global model
+    global model, item_to_vehicle_mappings
     # retrieve the path to the model file using the model name
     model_path = 'outputs/vehicle_recommendations_model.pt' #Model.get_model_path('sklearn_mnist')
     model = SessionGraph(opt, 1149)
     model.load_state_dict(torch.load(model_path))
     model.eval()
+
+    item_to_vehicle_mappings = pickle.load(open(os.path.join('outputs/itemid_to_vehicle_mapping.dat'), 'rb'))
 
 def create_connection_matrix(session_sequence_list):
     inputs, mask = np.asarray([session_sequence_list]), np.asarray([[1] * len(session_sequence_list)])
@@ -76,5 +78,4 @@ def predict(model, data):
 def run(raw_data):
     data = raw_data #np.array(json.loads(raw_data)['data']) #List of clicks eg [1,2,3,4]
     predictions = predict(model, data) # make prediction
-    return predictions.topk(20)[1].tolist()[0]
-
+    return [ item_to_vehicle_mappings[i] for i in predictions.topk(20)[1].tolist()[0]]
