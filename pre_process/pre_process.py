@@ -4,7 +4,7 @@ import pickle
 import operator
 import datetime
 import os
-
+import pandas as pd 
 
 dataset = 'datasets/clicks_sample_clean.csv'
 
@@ -191,9 +191,22 @@ if shrink_data:
     pickle.dump(tes, open('dataset_8/test.dat', 'wb'))
     pickle.dump(tra_seqs, open('dataset_8/all_train_seq.dat', 'wb'))
 
-pickle.dump(tra, open('dataset_sample/train.dat', 'wb'))
-pickle.dump(tes, open('dataset_sample/test.dat', 'wb'))
-pickle.dump(tra_seqs, open('dataset_sample/all_train_seq.dat', 'wb'))
+def get_item_mappings(filename):
+    clicks_df = pd.read_csv(filename)
+    clicks_df.drop_duplicates(subset='reg_no', inplace=True)
+    clicks_df.set_index('reg_no', inplace=True)
+    clicks_df.drop(['client_id','session_id', 'date','time','timeframe'], axis=1, inplace=True)
+    clicks_df['page'] = clicks_df['page'].apply(lambda x: f'https://shop.carstore.com{x}')
+    d = clicks_df.to_dict('index')
+
+    return dict((v,d[k]) for k,v in item_dict.items())
+
+pickle.dump(item_dict, open('dataset_sample/reg_no_item_id.dat', 'wb'))
+pickle.dump(get_item_mappings(dataset), open('dataset_sample/itemid_to_vehicle_mapping.dat', 'wb'))
+
+#pickle.dump(tra, open('dataset_sample/train.dat', 'wb'))
+#pickle.dump(tes, open('dataset_sample/test.dat', 'wb'))
+#pickle.dump(tra_seqs, open('dataset_sample/all_train_seq.dat', 'wb'))
 
 print('Done.')
 
