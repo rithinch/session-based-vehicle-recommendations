@@ -10,3 +10,8 @@ dataset_8
 datasets
 clicks_clean_500_vehicles.csv
 model/__pycache__
+model/outputs
+model/data
+model/.ipynb_checkpoints
+model/config.json
+clicks_sample_raw.csv

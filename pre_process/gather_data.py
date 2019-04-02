@@ -85,9 +85,9 @@ def concat_csv_files(files_path, filename):
     print(f"Skipped URL's (Without Reg No): {len(errors)}")
     error_data.to_csv("invalid_page_urls.csv", index=False)
 
-files_path = "real_data/**/*.csv"
+files_path = "sample_data/**/*.csv"
 
-concat_csv_files(files_path, "clicks_raw.csv")
+concat_csv_files(files_path, "clicks_sample_raw.csv")
 
 
 
