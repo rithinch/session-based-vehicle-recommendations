@@ -6,9 +6,12 @@ session_size = -1
 
 clicks_df.dropna(inplace=True)
 
+cols = ["session_id","reg_no"]
+clicks_df = clicks_df.loc[(clicks_df[cols].shift() != clicks_df[cols]).any(axis=1)] # Remove Consecutive same clicks in session
+
 grouped = clicks_df.groupby('session_id')['page'].agg(["count"])
 
-filtered = grouped.query('count>1')
+filtered = grouped.query('count>1 and count<40')
 
 clean_df = pd.merge(clicks_df, filtered, on='session_id')
 
