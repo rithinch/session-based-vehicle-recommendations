@@ -106,22 +106,19 @@ import argparse
 
 from azureml.core.model import Model
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--dataset_folder', default='data/dataset_sample', help='dataset folder')
-parser.add_argument('--batchSize', type=int, default=100, help='input batch size')
-parser.add_argument('--hiddenSize', type=int, default=100, help='hidden state size')
-parser.add_argument('--epoch', type=int, default=30, help='the number of epochs to train for')
-parser.add_argument('--lr', type=float, default=0.001, help='learning rate')  # [0.001, 0.0005, 0.0001]
-parser.add_argument('--lr_dc', type=float, default=0.1, help='learning rate decay rate')
-parser.add_argument('--lr_dc_step', type=int, default=3, help='the number of steps after which the learning rate decay')
-parser.add_argument('--l2', type=float, default=1e-5, help='l2 penalty')  # [0.001, 0.0005, 0.0001, 0.00005, 0.00001]
-parser.add_argument('--step', type=int, default=1, help='gnn propogation steps')
-parser.add_argument('--patience', type=int, default=10, help='the number of epoch to wait before early stop ')
-parser.add_argument('--nonhybrid', action='store_true', help='only use the global preference to predict')
-parser.add_argument('--validation', action='store_true', help='validation')
-parser.add_argument('--valid_portion', type=float, default=0.1, help='split the portion of training set as validation set')
-parser.add_argument('--model_name',  default='vehicle_recommendations_model', help='name of the model to be saved')
-opt = parser.parse_args()
+opt = argparse.Namespace()
+opt.batchSize = 100
+opt.hiddenSize = 100
+opt.lr = 0.001
+opt.lr_dc = 0.1
+opt.lr_dc_step = 3
+opt.l2 = 1e-5
+opt.step = 1
+opt.patience = 10
+opt.nonhybrid = False
+opt.validation = False
+opt.valid_portion = 0.1
+opt.model_name = 'vehicle_recommendations_model'
 
 local = False
 
@@ -130,14 +127,14 @@ def init():
     # retrieve the path to the model file using the model name
 
     model_path = f'outputs/{opt.model_name}.pt' if local else Model.get_model_path(opt.model_name)
-    item_mapping_path = os.path.join(f'outputs/{opt.model_name}_item_veh_mapping.dat') if local else Model.get_model_path(f'{opt.model_name}_item_veh_mapping')
-    veh_mapping_path = os.path.join(f'outputs/{opt.model_name}_veh_item_mapping.dat') if local else Model.get_model_path(f'{opt.model_name}_veh_item_mapping')
+    item_mapping_path = os.path.join(f'outputs/{opt.model_name}_item_veh_mapping.dat') if local else Model.get_model_path(f'item_to_veh_mappings')
+    veh_mapping_path = os.path.join(f'outputs/{opt.model_name}_veh_item_mapping.dat') if local else Model.get_model_path(f'veh_to_item_mappings')
 
     item_to_vehicle_mappings = pickle.load(open(item_mapping_path, 'rb')) 
     vehicle_to_item_mappings = pickle.load(open(veh_mapping_path, 'rb')) 
 
     model = SessionGraph(opt, len(item_to_vehicle_mappings)+1)
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path, map_location='cpu'))
     model.eval()
 
 def create_connection_matrix(session_sequence_list):
@@ -200,3 +197,5 @@ def run(raw_data):
 
 
 #clicks = ['ov62ydr', 'YB64VPM', 'pk12lxy', 'AGZ1930']
+#init()
+#print(run(clicks))

@@ -101,7 +101,7 @@ def main(run):
     #Save Model 
     output_folder = opt.output_folder
     os.makedirs(output_folder, exist_ok=True)
-    
+    torch.save(model, f'{output_folder}/{opt.model_name}_full.pth')
     torch.save(model.state_dict(), f'{output_folder}/{opt.model_name}.pt')
     shutil.copy(os.path.join(opt.dataset_folder, 'itemid_to_vehicle_mapping.dat'), f'{output_folder}/{opt.model_name}_item_veh_mapping.dat')
     shutil.copy(os.path.join(opt.dataset_folder, 'reg_no_item_id.dat'), f'{output_folder}/{opt.model_name}_veh_item_mapping.dat')

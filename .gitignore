@@ -17,3 +17,4 @@ model/config.json
 clicks_sample_raw.csv
 model/training_scripts/aml_config/project.json
 model/test_output
+model/sample_outputs
