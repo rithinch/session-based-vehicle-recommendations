@@ -23,6 +23,8 @@ parser.add_argument('--patience', type=int, default=10, help='the number of epoc
 parser.add_argument('--nonhybrid', action='store_true', help='only use the global preference to predict')
 parser.add_argument('--validation', action='store_true', help='validation')
 parser.add_argument('--valid_portion', type=float, default=0.1, help='split the portion of training set as validation set')
+parser.add_argument('--model_name',  default='vehicle_recommendations_model', help='name of the model to be saved')
+parser.add_argument('--output_folder',  default='outputs', help='name of the folder to save outputs')
 opt = parser.parse_args()
 print(opt)
 
@@ -35,6 +37,8 @@ def main(run):
     else:
         test_data = pickle.load(open(os.path.join(opt.dataset_folder, 'test.dat'), 'rb'))
     
+    print(test_data[0][0], test_data[1][0])
+
     train_data = Data(train_data, shuffle=True)
     test_data = Data(test_data, shuffle=False)
     
@@ -78,6 +82,7 @@ def main(run):
         #Metrics Capture
         run.log('Recall@20', hit)
         run.log('MRR@20', mrr)
+        run.log('Mean Loss', mean_loss)
 
         print('Current Result:')
         print('\tRecall@20:\t%.4f\tMMR@20:\t%.4f\tMean Loss:\t%.4f,\tEpoch:\t%d,\t%d'% (hit, mrr, mean_loss, epoch, epoch))
@@ -94,10 +99,13 @@ def main(run):
     run.log('Training Time (s)', (end - start))
 
     #Save Model 
-    os.makedirs('outputs', exist_ok=True)
-    torch.save(model.state_dict(), 'outputs/vehicle_recommendations_model.pt')
-    shutil.copy(os.path.join(opt.dataset_folder, 'itemid_to_vehicle_mapping.dat'), 'outputs')
-
+    output_folder = opt.output_folder
+    os.makedirs(output_folder, exist_ok=True)
+    torch.save(model, f'{output_folder}/{opt.model_name}_full.pth')
+    torch.save(model.state_dict(), f'{output_folder}/{opt.model_name}.pt')
+    shutil.copy(os.path.join(opt.dataset_folder, 'itemid_to_vehicle_mapping.dat'), f'{output_folder}/{opt.model_name}_item_veh_mapping.dat')
+    shutil.copy(os.path.join(opt.dataset_folder, 'reg_no_item_id.dat'), f'{output_folder}/{opt.model_name}_veh_item_mapping.dat')
+    
     run.log("Model Saved in Outputs", True)
 
 if __name__ == '__main__':

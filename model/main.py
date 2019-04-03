@@ -54,19 +54,18 @@ def main(run):
     best_epoch = [0, 0]
     bad_counter = 0
 
-    hit_list = []
-    mrr_list = []
-    loss_list = []
+    #Before Training, Predict
+
+    hit, mrr = predict_scores(model, test_data)
+    run.log('Recall@20', hit)
+    run.log('MRR@20', mrr)
+
 
     for epoch in range(opt.epoch):
         print('-------------------------------------------------------')
         print('epoch: ', epoch)
         
         hit, mrr, mean_loss = train_test(model, train_data, test_data)
-        
-        hit_list.append(hit)
-        mrr_list.append(mrr)
-        loss_list.append(mean_loss)
 
         flag = 0
         if hit >= best_result[0]:

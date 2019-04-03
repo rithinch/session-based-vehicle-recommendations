@@ -80,10 +80,15 @@ class SessionGraph(Module):
         scores = torch.matmul(a, b.transpose(1, 0))
         return scores
 
-    def forward(self, inputs, A):
+    def forward(self, inputs, A, mask, alias_inputs):
+        
         hidden = self.embedding(inputs)
+        
         hidden = self.gnn(A, hidden)
-        return hidden
+        
+        hidden = torch.stack([hidden[i][alias_inputs[i]] for i in torch.arange(len(alias_inputs)).long()])
+        
+        return self.compute_scores(hidden, mask)
 
 
 def trans_to_cuda(variable):
@@ -101,15 +106,17 @@ def trans_to_cpu(variable):
 
 
 def forward(model, i, data):
+    
     alias_inputs, A, items, mask, targets = data.get_slice(i)
+    
     alias_inputs = trans_to_cuda(torch.Tensor(alias_inputs).long())
     items = trans_to_cuda(torch.Tensor(items).long())
     A = trans_to_cuda(torch.Tensor(A).float())
     mask = trans_to_cuda(torch.Tensor(mask).long())
-    hidden = model(items, A)
-    get = lambda i: hidden[i][alias_inputs[i]]
-    seq_hidden = torch.stack([get(i) for i in torch.arange(len(alias_inputs)).long()])
-    return targets, model.compute_scores(seq_hidden, mask)
+    
+    scores = model(items, A, mask, alias_inputs)
+    
+    return targets, scores
 
 
 def train_test(model, train_data, test_data):
