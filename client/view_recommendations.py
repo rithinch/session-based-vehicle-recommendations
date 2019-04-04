@@ -1,6 +1,8 @@
 import requests
 import webbrowser
 import json
+from lxml import html
+
 
 def get_recomendations(session_sequence):
     
@@ -16,11 +18,21 @@ def get_recomendations(session_sequence):
     return response.json()
 
 def open_results(results):
-    for i in results[:10]:
-        webbrowser.open_new_tab(i['page'])
 
+        c=0
 
+        for i in results:
 
-clicks = ['ck12bce', 'bf17jya']
+                page = requests.get(i['page'])
+                tree = html.fromstring(page.content)
 
-open_results(get_recomendations(clicks))
+                if tree.xpath('//title/text()')[0] != "Used Cars for Sale":
+                        c+=1
+                        webbrowser.open_new_tab(i['page'])
+
+        return c
+
+clicks = ["df16czj", "va65wpt", "lf16ypo", "ay14ygl", "ym08nha"]
+
+c = open_results(get_recomendations(clicks))
+print(c)
