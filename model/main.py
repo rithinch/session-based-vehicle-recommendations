@@ -58,8 +58,8 @@ def main(run):
     #Before Training, Predict
 
     hit, mrr = predict_scores(model, test_data)
-    run.log('Recall@20', hit)
-    run.log('MRR@20', mrr)
+    run.log(f'Recall@{opt.top_k}', hit)
+    run.log(f'MRR@{opt.top_k}', mrr)
 
 
     for epoch in range(opt.epoch):
@@ -80,8 +80,8 @@ def main(run):
         
 
         #Metrics Capture
-        run.log('Recall@20', hit)
-        run.log('MRR@20', mrr)
+        run.log(f'Recall@{opt.top_k}', hit)
+        run.log(f'MRR@{opt.top_k}', mrr)
         run.log('Mean Loss', mean_loss)
 
         print('Current Result:')
