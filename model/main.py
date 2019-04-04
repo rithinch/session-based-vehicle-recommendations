@@ -12,6 +12,7 @@ from azureml.core import Run
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset_folder', default='data/dataset_sample', help='dataset folder')
 parser.add_argument('--batchSize', type=int, default=100, help='input batch size')
+parser.add_argument('--top_k', type=int, default=20, help='number of recommendations to return')
 parser.add_argument('--hiddenSize', type=int, default=100, help='hidden state size')
 parser.add_argument('--epoch', type=int, default=30, help='the number of epochs to train for')
 parser.add_argument('--lr', type=float, default=0.001, help='learning rate')  # [0.001, 0.0005, 0.0001]

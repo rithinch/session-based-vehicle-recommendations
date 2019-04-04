@@ -61,6 +61,7 @@ class SessionGraph(Module):
         self.loss_function = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.parameters(), lr=opt.lr, weight_decay=opt.l2)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=opt.lr_dc_step, gamma=opt.lr_dc)
+        self.top_k = opt.top_k
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -152,7 +153,7 @@ def predict_scores(model, test_data):
     slices = test_data.generate_batch(model.batch_size)
     for i in slices:
         targets, scores = forward(model, i, test_data)
-        sub_scores = scores.topk(20)[1]
+        sub_scores = scores.topk(model.top_k)[1]
         sub_scores = trans_to_cpu(sub_scores).detach().numpy()
         for score, target, mask in zip(sub_scores, targets, test_data.mask):
             hit.append(np.isin(target - 1, score))
