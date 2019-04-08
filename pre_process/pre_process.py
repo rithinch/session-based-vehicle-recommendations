@@ -10,7 +10,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--file', help='dataset file which has the click stream')
 parser.add_argument('--dest', help='folder where to save the pre-processed data')
-parser.add_argument('--split_days', type=int, default=7, help='folder where to save the pre-processed data')
+parser.add_argument('--split_days', type=int, default=3, help='folder where to save the pre-processed data')
 opt = parser.parse_args()
 
 dataset = opt.file

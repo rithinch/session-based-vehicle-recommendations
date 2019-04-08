@@ -17,7 +17,7 @@ clean_df = pd.merge(clicks_df, filtered, on='session_id')
 
 clean_df.drop('count', axis=1, inplace=True)
 
-filename = "clicks_sample_clean.csv"
+filename = "clicks_latest_clean.csv"
 
 if (session_size > 0):
 
