@@ -15,6 +15,7 @@ opt = parser.parse_args()
 
 dataset = opt.file
 save_folder_name = opt.dest
+overall_split_day = time.mktime(time.strptime("2019-03-01", '%Y-%m-%d'))
 
 print("-- Starting @ %ss" % datetime.datetime.now())
 with open(dataset, "r") as f:
@@ -72,7 +73,7 @@ length = len(sess_clicks)
 for s in list(sess_clicks):
     curseq = sess_clicks[s]
     filseq = list(filter(lambda i: iid_counts[i] >= 5, curseq))
-    if len(filseq) < 2:
+    if (len(filseq) < 2) or (sess_date[s] < overall_split_day):
         del sess_clicks[s]
         del sess_date[s]
     else:
@@ -80,6 +81,9 @@ for s in list(sess_clicks):
 
 # Split out test set based on dates
 dates = list(sess_date.items())
+
+
+
 maxdate = dates[0][1]
 
 for _, date in dates:
@@ -89,7 +93,8 @@ for _, date in dates:
 # 7 days for test
 splitdate = maxdate - 86400 * opt.split_days
 
-print('Splitting date', splitdate) 
+print('Splitting date', splitdate)
+
 tra_sess = filter(lambda x: x[1] < splitdate, dates)
 tes_sess = filter(lambda x: x[1] > splitdate, dates)
 

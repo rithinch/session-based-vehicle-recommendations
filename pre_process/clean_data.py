@@ -1,6 +1,6 @@
 import pandas as pd
 
-clicks_df = pd.read_csv("clicks_sample_raw.csv")
+clicks_df = pd.read_csv("clicks_latest_small_raw.csv")
 vehicle_size = -1
 session_size = -1
 
@@ -17,7 +17,7 @@ clean_df = pd.merge(clicks_df, filtered, on='session_id')
 
 clean_df.drop('count', axis=1, inplace=True)
 
-filename = "clicks_latest_clean.csv"
+filename = "clicks_latest_small_clean.csv"
 
 if (session_size > 0):
 
