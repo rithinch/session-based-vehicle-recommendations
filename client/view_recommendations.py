@@ -35,7 +35,7 @@ def open_results(results):
 
 #"https://shop.carstore.com/search/honda/civic/manual-diesel-red-estate-LG67MKL"
 
-clicks = ["LG67MKL"]
+clicks = ["fd64ogv", "ft15hev", "fl14rzb", "bc65gha", "ya65vfk"]
 
 c = open_results(get_recomendations(clicks))
 print(c)
