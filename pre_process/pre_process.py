@@ -15,7 +15,7 @@ opt = parser.parse_args()
 
 dataset = opt.file
 save_folder_name = opt.dest
-overall_split_day = time.mktime(time.strptime("2019-03-01", '%Y-%m-%d'))
+overall_split_day = time.mktime(time.strptime("2019-03-15", '%Y-%m-%d'))
 
 print("-- Starting @ %ss" % datetime.datetime.now())
 with open(dataset, "r") as f:
@@ -230,6 +230,10 @@ def get_item_features_embeddings(filename):
     t_one_hot_encoding = pd.get_dummies(clean_df['trasmission'])
     clean_df = clean_df.drop('trasmission', axis=1)
     clean_df = clean_df.join(t_one_hot_encoding)
+
+    model_one_hot_encoding = pd.get_dummies(clean_df['model'])
+    clean_df = clean_df.drop('model', axis=1)
+    clean_df = clean_df.join(model_one_hot_encoding)
 
     features = clean_df.iloc[:,clean_df_c_len:]
     features = clean_df[['reg_no']].join(features)
