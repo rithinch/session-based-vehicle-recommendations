@@ -1,7 +1,7 @@
 import argparse
 import pickle
 import time
-from utils import Data, split_validation
+from utils import Data, split_validation, get_feature_vectors
 from model import *
 import os
 import torch
@@ -26,6 +26,7 @@ parser.add_argument('--validation', action='store_true', help='validation')
 parser.add_argument('--valid_portion', type=float, default=0.1, help='split the portion of training set as validation set')
 parser.add_argument('--model_name',  default='vehicle_recommendations_model', help='name of the model to be saved')
 parser.add_argument('--output_folder',  default='outputs', help='name of the folder to save outputs')
+parser.add_argument('--use_features', type=bool, default=False, help='to include item features')
 opt = parser.parse_args()
 print(opt)
 
@@ -40,15 +41,20 @@ def main(run):
     
     print(test_data[0][0], test_data[1][0])
 
-    train_data = Data(train_data, shuffle=True)
-    test_data = Data(test_data, shuffle=False)
-    
     cars = pickle.load(open(os.path.join(opt.dataset_folder, 'reg_no_item_id.dat'), 'rb'))
+    item_features = pickle.load(open(os.path.join(opt.dataset_folder, 'itemid_features.dat'), 'rb'))
 
+    
+    train_data = Data(train_data, shuffle=True, features=item_features)
+    test_data = Data(test_data, shuffle=False, features=item_features)
+    
     n_node = len(cars)+1 #1149 #6176 #5933 #unique cars
+    n_feature_columns = len(item_features[1])
+    features_vector = get_feature_vectors(n_node, item_features)
+
     run.log("Unique No. of Cars", n_node)
 
-    model = trans_to_cuda(SessionGraph(opt, n_node))
+    model = trans_to_cuda(SessionGraph(opt, n_node, n_feature_columns, features_vector))
 
     start = time.time()
     best_result = [0, 0]
