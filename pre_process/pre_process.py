@@ -188,8 +188,6 @@ for seq in tes_seqs:
     all += len(seq)
 print('avg length: ', all/(len(tra_seqs) + len(tes_seqs) * 1.0))
 
-if not os.path.exists(save_folder_name):
-    os.makedirs(save_folder_name)
 
 shrink_data = False
 
@@ -214,6 +212,49 @@ def get_item_mappings(filename):
 
     return dict((v,d[k]) for k,v in item_dict.items())
 
+def get_item_features_embeddings(filename):
+
+    clean_df = pd.read_csv(filename)
+    clean_df.drop_duplicates(subset='reg_no', inplace=True)
+
+    clean_df_c_len = len(clean_df.columns)
+
+    make_one_hot_encoding = pd.get_dummies(clean_df['make'])
+    clean_df = clean_df.drop('make', axis=1)
+    clean_df = clean_df.join(make_one_hot_encoding)
+
+    fuel_one_hot_encoding = pd.get_dummies(clean_df['fuel'])
+    clean_df = clean_df.drop('fuel', axis=1)
+    clean_df = clean_df.join(fuel_one_hot_encoding)
+
+    t_one_hot_encoding = pd.get_dummies(clean_df['trasmission'])
+    clean_df = clean_df.drop('trasmission', axis=1)
+    clean_df = clean_df.join(t_one_hot_encoding)
+
+    features = clean_df.iloc[:,clean_df_c_len:]
+    features = clean_df[['reg_no']].join(features)
+    
+    features.set_index('reg_no', inplace=True)
+
+    d = features.to_dict('index')
+    
+    column_names = list(features.columns.values)
+
+    features_dict = {}
+    for k,v in item_dict.items():
+        f = d[k]
+        features_dict[v] = [f[c] for c in column_names]
+
+    return features_dict
+
+
+
+
+
+if not os.path.exists(save_folder_name):
+    os.makedirs(save_folder_name)
+
+pickle.dump(get_item_features_embeddings(dataset), open(f'{save_folder_name}/itemid_features.dat', 'wb'))
 pickle.dump(item_dict, open(f'{save_folder_name}/reg_no_item_id.dat', 'wb'))
 pickle.dump(get_item_mappings(dataset), open(f'{save_folder_name}/itemid_to_vehicle_mapping.dat', 'wb'))
 
