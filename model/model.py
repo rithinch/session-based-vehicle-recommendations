@@ -46,7 +46,7 @@ class GNN(Module):
 
 
 class SessionGraph(Module):
-    def __init__(self, opt, n_node):
+    def __init__(self, opt, n_node, n_feature_columns=0, features=None):
         super(SessionGraph, self).__init__()
         self.hidden_size = opt.hiddenSize
         self.n_node = n_node
@@ -54,10 +54,13 @@ class SessionGraph(Module):
         self.nonhybrid = opt.nonhybrid
         self.embedding = nn.Embedding(self.n_node, self.hidden_size)
         self.gnn = GNN(self.hidden_size, step=opt.step)
-        self.linear_one = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
-        self.linear_two = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
-        self.linear_three = nn.Linear(self.hidden_size, 1, bias=False)
-        self.linear_transform = nn.Linear(self.hidden_size * 2, self.hidden_size, bias=True)
+        self.features = trans_to_cuda(torch.Tensor(features).float())
+        self.use_features = opt.use_features
+        gnn_node_vector_size = self.hidden_size+n_feature_columns if (opt.use_features) else self.hidden_size
+        self.linear_one = nn.Linear(gnn_node_vector_size, gnn_node_vector_size, bias=True)
+        self.linear_two = nn.Linear(gnn_node_vector_size, gnn_node_vector_size, bias=True)
+        self.linear_three = nn.Linear(gnn_node_vector_size, 1, bias=False)
+        self.linear_transform = nn.Linear(gnn_node_vector_size * 2, self.hidden_size, bias=True)
         self.loss_function = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.parameters(), lr=opt.lr, weight_decay=opt.l2)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=opt.lr_dc_step, gamma=opt.lr_dc)
@@ -78,17 +81,26 @@ class SessionGraph(Module):
         if not self.nonhybrid:
             a = self.linear_transform(torch.cat([a, ht], 1))
         b = self.embedding.weight[1:]  # n_nodes x latent_size
+        
+        if self.use_features:
+            pass
+
         scores = torch.matmul(a, b.transpose(1, 0))
         
         #Apply softmax, before returning scores
         return scores
 
-    def forward(self, inputs, A, mask, alias_inputs):
+    def forward(self, inputs, A, mask, alias_inputs, features):
         
         hidden = self.embedding(inputs) #no.of items in inputs * hidden size (100) eg shape; (batch_size,items_in_input,hidden_size) (100,6,100)
-        hidden = self.gnn(A, hidden)
-        hidden = torch.stack([hidden[i][alias_inputs[i]] for i in torch.arange(len(alias_inputs)).long()])
-
+        
+        hidden = self.gnn(A, hidden) #Obtain node vectors from GNN in inputs order
+        
+        if self.use_features:
+            hidden = torch.cat((hidden, features), 2) #Concatenate feature vectors with node vectors
+        
+        hidden = torch.stack([hidden[i][alias_inputs[i]] for i in torch.arange(len(alias_inputs)).long()]) #Re-order hidden vectors and features with original input sequence order 
+        
         return self.compute_scores(hidden, mask)
 
 
@@ -108,14 +120,15 @@ def trans_to_cpu(variable):
 
 def forward(model, i, data):
     
-    alias_inputs, A, items, mask, targets = data.get_slice(i)
+    alias_inputs, A, items, mask, targets, features = data.get_slice(i)
     
     alias_inputs = trans_to_cuda(torch.Tensor(alias_inputs).long())
     items = trans_to_cuda(torch.Tensor(items).long())
     A = trans_to_cuda(torch.Tensor(A).float())
     mask = trans_to_cuda(torch.Tensor(mask).long())
+    features = trans_to_cuda(torch.Tensor(features).float())
     
-    scores = model(items, A, mask, alias_inputs)
+    scores = model(items, A, mask, alias_inputs, features)
     
     return targets, scores
 

@@ -18,6 +18,7 @@ opt.nonhybrid = False
 opt.validation = False
 opt.valid_portion = 0.1
 opt.model_name = 'vehicle_recommendations_model'
+opt.use_features = False
 
 local = False
 
@@ -78,8 +79,9 @@ def pre_process(raw_data):
     items = trans_to_cuda(torch.Tensor(items).long())
     A = trans_to_cuda(torch.Tensor(A).float())
     mask = trans_to_cuda(torch.Tensor(mask).long())
+    features = None
 
-    return items, A, mask, alias_inputs
+    return items, A, mask, alias_inputs, features
 
 def post_process(predictions):
     return [ item_to_vehicle_mappings[i] for i in predictions.topk(20)[1].tolist()[0]]
@@ -88,9 +90,9 @@ def run(raw_data):
     
     data = raw_data if local else np.array(json.loads(raw_data)['viewed_vehicles']) #List of reg_no clicks eg [1,2,3,4]
     
-    items, A, mask, alias_inputs = pre_process(data)
+    items, A, mask, alias_inputs, features = pre_process(data)
 
-    predictions = model(items, A, mask, alias_inputs) # make prediction
+    predictions = model(items, A, mask, alias_inputs, features) # make prediction
 
     return post_process(predictions)
 
