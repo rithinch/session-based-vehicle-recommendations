@@ -54,13 +54,13 @@ class SessionGraph(Module):
         self.nonhybrid = opt.nonhybrid
         self.embedding = nn.Embedding(self.n_node, self.hidden_size)
         self.gnn = GNN(self.hidden_size, step=opt.step)
-        self.features = trans_to_cuda(torch.Tensor(features).float())
+        self.features = trans_to_cuda(torch.Tensor(features).float()).squeeze(0)
         self.use_features = opt.use_features
         gnn_node_vector_size = self.hidden_size+n_feature_columns if (opt.use_features) else self.hidden_size
         self.linear_one = nn.Linear(gnn_node_vector_size, gnn_node_vector_size, bias=True)
         self.linear_two = nn.Linear(gnn_node_vector_size, gnn_node_vector_size, bias=True)
         self.linear_three = nn.Linear(gnn_node_vector_size, 1, bias=False)
-        self.linear_transform = nn.Linear(gnn_node_vector_size * 2, self.hidden_size, bias=True)
+        self.linear_transform = nn.Linear(gnn_node_vector_size * 2, gnn_node_vector_size, bias=True)
         self.loss_function = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.parameters(), lr=opt.lr, weight_decay=opt.l2)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=opt.lr_dc_step, gamma=opt.lr_dc)
@@ -83,11 +83,10 @@ class SessionGraph(Module):
         b = self.embedding.weight[1:]  # n_nodes x latent_size
         
         if self.use_features:
-            pass
-
+            b = torch.cat((b, self.features), 1) #Concatenate embeddings with features
+            
         scores = torch.matmul(a, b.transpose(1, 0))
         
-        #Apply softmax, before returning scores
         return scores
 
     def forward(self, inputs, A, mask, alias_inputs, features):
