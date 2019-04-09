@@ -79,16 +79,16 @@ class SessionGraph(Module):
             a = self.linear_transform(torch.cat([a, ht], 1))
         b = self.embedding.weight[1:]  # n_nodes x latent_size
         scores = torch.matmul(a, b.transpose(1, 0))
+        
+        #Apply softmax, before returning scores
         return scores
 
     def forward(self, inputs, A, mask, alias_inputs):
         
-        hidden = self.embedding(inputs)
-        
+        hidden = self.embedding(inputs) #no.of items in inputs * hidden size (100) eg shape; (batch_size,items_in_input,hidden_size) (100,6,100)
         hidden = self.gnn(A, hidden)
-        
         hidden = torch.stack([hidden[i][alias_inputs[i]] for i in torch.arange(len(alias_inputs)).long()])
-        
+
         return self.compute_scores(hidden, mask)
 
 

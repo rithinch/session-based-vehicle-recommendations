@@ -3,9 +3,9 @@ import numpy as np
 
 def data_masks(all_usr_pois, item_tail):
     us_lens = [len(upois) for upois in all_usr_pois] #list of user session lengths
-    len_max = max(us_lens) #maximum user session length
-    us_pois = [upois + item_tail * (len_max - le) for upois, le in zip(all_usr_pois, us_lens)]
-    us_msks = [[1] * le + [0] * (len_max - le) for le in us_lens]
+    len_max = max(us_lens) #maximum user session length in the datasets (train/test)
+    us_pois = [upois + item_tail * (len_max - le) for upois, le in zip(all_usr_pois, us_lens)] #Pad 0's till session length is max length - inputs
+    us_msks = [[1] * le + [0] * (len_max - le) for le in us_lens] #List of 1 and 0, where size = max_session_length and 1 if there is an item click
     return us_pois, us_msks, len_max
 
 
@@ -51,12 +51,16 @@ class Data():
 
     def get_slice(self, i):
         inputs, mask, targets = self.inputs[i], self.mask[i], self.targets[i]
+        
         items, n_node, A, alias_inputs = [], [], [], []
         for u_input in inputs:
             n_node.append(len(np.unique(u_input)))
         max_n_node = np.max(n_node)
+        
         for u_input in inputs:
-            node = np.unique(u_input)
+            #u_input = [947 821 839 425 424   0   0   0   0   0   0   0   0   0   0   0   0   0  0]
+            #mask = [1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0]
+            node = np.unique(u_input) #[0 424 425 821 839 947]
             items.append(node.tolist() + (max_n_node - len(node)) * [0])
             u_A = np.zeros((max_n_node, max_n_node))
             for i in np.arange(len(u_input) - 1):
@@ -73,5 +77,6 @@ class Data():
             u_A_out = np.divide(u_A.transpose(), u_sum_out)
             u_A = np.concatenate([u_A_in, u_A_out]).transpose()
             A.append(u_A)
-            alias_inputs.append([np.where(node == i)[0][0] for i in u_input])
+            alias_inputs.append([np.where(node == i)[0][0] for i in u_input]) #the index in items [5, 3, 4, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
         return alias_inputs, A, items, mask, targets
