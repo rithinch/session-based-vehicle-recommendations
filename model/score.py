@@ -4,6 +4,7 @@ import pickle
 import argparse
 from model import *
 from azureml.core.model import Model
+from utils import get_feature_vectors, pad_features
 
 opt = argparse.Namespace()
 opt.batchSize = 100
@@ -18,34 +19,42 @@ opt.nonhybrid = False
 opt.validation = False
 opt.valid_portion = 0.1
 opt.model_name = 'vehicle_recommendations_model'
-opt.use_features = False
+opt.use_features = True
+opt.top_k = 20
 
-local = False
+local = True
 
 def init():
-    global model, item_to_vehicle_mappings, vehicle_to_item_mappings
+    global model, item_to_vehicle_mappings, vehicle_to_item_mappings, item_features
     # retrieve the path to the model file using the model name
 
     model_path = f'outputs/{opt.model_name}.pt' if local else Model.get_model_path(opt.model_name)
     item_mapping_path = os.path.join(f'outputs/{opt.model_name}_item_veh_mapping.dat') if local else Model.get_model_path(f'item_to_veh_mappings')
     veh_mapping_path = os.path.join(f'outputs/{opt.model_name}_veh_item_mapping.dat') if local else Model.get_model_path(f'veh_to_item_mappings')
-
+    
+    item_features = pad_features(pickle.load(open(os.path.join(f'outputs/itemid_features.dat'), 'rb')))
     item_to_vehicle_mappings = pickle.load(open(item_mapping_path, 'rb')) 
     vehicle_to_item_mappings = pickle.load(open(veh_mapping_path, 'rb')) 
 
-    model = SessionGraph(opt, len(item_to_vehicle_mappings)+1)
+    n_node = len(item_to_vehicle_mappings)+1
+    n_features = len(item_features[1])
+
+    features_vector = get_feature_vectors(n_node, item_features)
+
+    model = SessionGraph(opt, n_node, n_features, features_vector)
     model.load_state_dict(torch.load(model_path, map_location='cpu'))
     model.eval()
 
 def create_connection_matrix(session_sequence_list):
     inputs, mask = np.asarray([session_sequence_list]), np.asarray([[1] * len(session_sequence_list)])
-    items, n_node, A, alias_inputs = [], [], [], []
+    items, n_node, A, alias_inputs, features = [], [], [], [], []
     for u_input in inputs:
         n_node.append(len(np.unique(u_input)))
     max_n_node = np.max(n_node)
     for u_input in inputs:
         node = np.unique(u_input)
-        items.append(node.tolist() + (max_n_node - len(node)) * [0])
+        padded_nodes = node.tolist() + (max_n_node - len(node)) * [0]
+        items.append(padded_nodes)
         u_A = np.zeros((max_n_node, max_n_node))
         for i in np.arange(len(u_input) - 1):
             if u_input[i + 1] == 0:
@@ -62,7 +71,9 @@ def create_connection_matrix(session_sequence_list):
         u_A = np.concatenate([u_A_in, u_A_out]).transpose()
         A.append(u_A)
         alias_inputs.append([np.where(node == i)[0][0] for i in u_input])
-    return alias_inputs, A, items, mask
+        features.append([item_features[i] for i in padded_nodes])
+
+    return alias_inputs, A, items, mask, features
 
 def pre_process(raw_data):
     
@@ -73,18 +84,18 @@ def pre_process(raw_data):
         if i in vehicle_to_item_mappings:
             mapped_data.append(vehicle_to_item_mappings[i])
 
-    alias_inputs, A, items, mask = create_connection_matrix(mapped_data)
+    alias_inputs, A, items, mask, features = create_connection_matrix(mapped_data)
     
     alias_inputs = trans_to_cuda(torch.Tensor(alias_inputs).long())
     items = trans_to_cuda(torch.Tensor(items).long())
     A = trans_to_cuda(torch.Tensor(A).float())
     mask = trans_to_cuda(torch.Tensor(mask).long())
-    features = None
+    features = trans_to_cuda(torch.Tensor(features).float())
 
     return items, A, mask, alias_inputs, features
 
 def post_process(predictions):
-    return [ item_to_vehicle_mappings[i] for i in predictions.topk(20)[1].tolist()[0]]
+    return [ item_to_vehicle_mappings[i] for i in predictions.topk(opt.top_k)[1].tolist()[0]]
 
 def run(raw_data):
     
@@ -97,6 +108,6 @@ def run(raw_data):
     return post_process(predictions)
 
 
-#clicks = ['ov62ydr', 'YB64VPM', 'pk12lxy', 'AGZ1930']
+#clicks = ['GX67CUO', 'LC67RXS', 'LC67RYA', 'HX18XVH']
 #init()
 #print(run(clicks))
