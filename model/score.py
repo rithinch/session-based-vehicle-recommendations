@@ -28,7 +28,7 @@ def init():
     global model, item_to_vehicle_mappings, vehicle_to_item_mappings, item_features
     # retrieve the path to the model file using the model name
 
-    model_path = f'outputs/{opt.model_name}.pt' if local else Model.get_model_path(opt.model_name)
+    model_path = f'outputs/{opt.model_name}.pt' if (local and False) else Model.get_model_path(opt.model_name)
     item_mapping_path = os.path.join(f'outputs/{opt.model_name}_item_veh_mapping.dat') if local else Model.get_model_path(f'item_to_veh_mappings')
     veh_mapping_path = os.path.join(f'outputs/{opt.model_name}_veh_item_mapping.dat') if local else Model.get_model_path(f'veh_to_item_mappings')
     
@@ -99,7 +99,7 @@ def post_process(predictions):
 
 def run(raw_data):
     
-    data = raw_data if local else np.array(json.loads(raw_data)['viewed_vehicles']) #List of reg_no clicks eg [1,2,3,4]
+    data = raw_data if (local and False) else np.array(json.loads(raw_data)['viewed_vehicles']) #List of reg_no clicks eg [1,2,3,4]
     
     items, A, mask, alias_inputs, features = pre_process(data)
 
