@@ -54,7 +54,7 @@ def main(run):
 
     run.log("Unique No. of Cars", n_node)
 
-    model = trans_to_cuda(SessionGraph(opt, n_node, n_feature_columns, features_vector))
+    model = trans_to_cuda(SessionGraph(opt, n_node, n_feature_columns=n_feature_columns, features=features_vector))
 
     start = time.time()
     best_result = [0, 0]
