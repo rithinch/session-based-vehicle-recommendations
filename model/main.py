@@ -9,6 +9,11 @@ import shutil
 
 from azureml.core import Run
 
+def boolean_string(s):
+    if s not in {'False', 'True'}:
+        raise ValueError('Not a valid boolean string')
+    return s == 'True'
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset_folder', default='data/dataset_sample', help='dataset folder')
 parser.add_argument('--batchSize', type=int, default=100, help='input batch size')
@@ -21,12 +26,12 @@ parser.add_argument('--lr_dc_step', type=int, default=3, help='the number of ste
 parser.add_argument('--l2', type=float, default=1e-5, help='l2 penalty')  # [0.001, 0.0005, 0.0001, 0.00005, 0.00001]
 parser.add_argument('--step', type=int, default=1, help='gnn propogation steps')
 parser.add_argument('--patience', type=int, default=10, help='the number of epoch to wait before early stop ')
-parser.add_argument('--nonhybrid', action='store_true', help='only use the global preference to predict')
+parser.add_argument('--nonhybrid', default=False, type=boolean_string, help='only use the global preference to predict')
 parser.add_argument('--validation', action='store_true', help='validation')
 parser.add_argument('--valid_portion', type=float, default=0.1, help='split the portion of training set as validation set')
 parser.add_argument('--model_name',  default='vehicle_recommendations_model', help='name of the model to be saved')
 parser.add_argument('--output_folder',  default='outputs', help='name of the folder to save outputs')
-parser.add_argument('--use_features', type=bool, default=False, help='to include item features')
+parser.add_argument('--use_features', default=False, type=boolean_string, help='to include item features')
 opt = parser.parse_args()
 print(opt)
 
