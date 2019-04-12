@@ -72,7 +72,7 @@ sorted_counts = sorted(iid_counts.items(), key=operator.itemgetter(1))
 length = len(sess_clicks)
 for s in list(sess_clicks):
     curseq = sess_clicks[s]
-    filseq = list(filter(lambda i: iid_counts[i] >= 5, curseq))
+    filseq = list(filter(lambda i: iid_counts[i] >= 1, curseq))
     if (len(filseq) < 2) or (sess_date[s] < overall_split_day):
         del sess_clicks[s]
         del sess_date[s]
