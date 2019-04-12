@@ -116,7 +116,8 @@ def main(run):
     torch.save(model.state_dict(), f'{output_folder}/{opt.model_name}.pt')
     shutil.copy(os.path.join(opt.dataset_folder, 'itemid_to_vehicle_mapping.dat'), f'{output_folder}/{opt.model_name}_item_veh_mapping.dat')
     shutil.copy(os.path.join(opt.dataset_folder, 'reg_no_item_id.dat'), f'{output_folder}/{opt.model_name}_veh_item_mapping.dat')
-    
+    shutil.copy(os.path.join(opt.dataset_folder, 'itemid_features.dat'), f'{output_folder}/itemid_features.dat')
+
     run.log("Model Saved in Outputs", True)
 
 if __name__ == '__main__':
